@@ -3,31 +3,51 @@
 # Start the pyess-addon service
 # s6-overlay docs: https://github.com/just-containers/s6-overlay
 # ==============================================================================
+#
 
-# Add your code here
+watchdog_restart_period="$(bashio::config 'watchdog.restart_wait' 10)"
+function ess_watchdog() {
+	# don't exit on error - will be handled gracefully by the watchdog
+	set +e
+	while true; do
+		bashio::log.info "Starting pyess for ${ess_host}, logging to mqtt server ${mqtt_host}"
 
-bashio::log.info "declaring variables"
+		/usr/bin/essmqtt "$@"
 
-# Declare variables
-declare ess_host sensors ess_password mqtt_host mqtt_user mqtt_password ess_update_interval
+		[ $? -ne 0 ] && bashio::log.warning "Last ESSMQTT execution failed, restarting in $watchdog_restart_period seconds..."
+		sleep "$watchdog_restart_period"
+	done
+}
 
-## Get the 'message' key from the user config options.
+config="$(bashio::addon.config)"
+inverters="$(bashio::jq "$config" ".inverters[]")"
+while IFS= read -r line; do
+	function bashio::cfg() {
+		value="$(bashio::jq "$line" ".$1")"
+		if [[ -z "$line" && -z "$2" ]]; then
+			# no value and no default value - error
+			bashio::log.error "no value for $1"
+			exit 1
+		fi
+		echo "$value"
+	}
 
-bashio::log.info "reading config"
+	declare ess_name ess_host sensors ess_password mqtt_host mqtt_user mqtt_password ess_update_interval
 
-ess_host=$(bashio::config 'ess_host')
-sensors=$(bashio::config 'ess_sensors')
-ess_password=$(bashio::config 'ess_password')
-mqtt_host=$(bashio::services mqtt "host")
-mqtt_user=$(bashio::services mqtt "username")
-mqtt_password=$(bashio::services mqtt "password")
-ess_update_interval=$(bashio::config 'ess_update_interval')
+	ess_name=$(bashio::cfg 'ess_name' 'myess')
+	ess_host=$(bashio::cfg 'ess_host')
+	sensors=$(bashio::cfg 'ess_sensors')
+	ess_password=$(bashio::cfg 'ess_password')
+	mqtt_host=$(bashio::services mqtt "host")
+	mqtt_user=$(bashio::services mqtt "username")
+	mqtt_password=$(bashio::services mqtt "password")
+	ess_update_interval=$(bashio::cfg 'ess_update_interval' 10)
 
-bashio::log.info "done reading config"
+	ess_watchdog --ess_name ${ess_name} --ess_password ${ess_password} --mqtt_server ${mqtt_host} --mqtt_user=${mqtt_user} --mqtt_password=${mqtt_password} --interval_seconds=10 --ess_host=${ess_host} --interval_seconds=${ess_update_interval} --hass_autoconfig_sensors=${sensors} &
+done <<< "$inverters"
 
+bashio::log.info "done starting all ESSMQTT instances"
 
-## Print the message the user supplied, defaults to "Hello World..."
-bashio::log.info "Starting pyss with ess ${ess_host}, logging to mqtt server ${mqtt_host}"
+wait
 
-## Run your program
-/usr/bin/essmqtt --ess_password ${ess_password} --mqtt_server ${mqtt_host} --mqtt_user=${mqtt_user} --mqtt_password=${mqtt_password} --interval_seconds=10 --ess_host=${ess_host} --interval_seconds=${ess_update_interval} --hass_autoconfig_sensors=${sensors}
+bashio::log.info "all instances terminated."
