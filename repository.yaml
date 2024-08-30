@@ -1,4 +1,4 @@
 # https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
 name: essmqtt addon repo
-url: 'https://github.com/gluap/pyess-addon'
-maintainer: gluap <github@pgoergen.de>
+url: 'https://github.com/SIMULATAN/pyess-addon'
+maintainer: simulatan <simulatan+hass@proton.me>
