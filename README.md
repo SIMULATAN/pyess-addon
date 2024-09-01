@@ -2,11 +2,11 @@
 
 This repository contains the pyess mqtt homeassistant add-on. Hopefully you can install it with this link:
 
-[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fgluap%2Fpyess-addon)
+[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fsimulatan%2Fpyess-addon)
 
 Or if you don't use My-homeassistant you can add the following repo url manually as an addon repository:
 
-```https://github.com/gluap/pyess-addon```
+```https://github.com/simulatan/pyess-addon```
 
 ## Add-ons
 
